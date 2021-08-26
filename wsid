@@ -35,10 +35,10 @@ html = (
 <a href='?sort=8'>Last modified (oldest first)</a> |
 <a href='?sort=10'>Name (A to Z)</a></span><br>
 <span>
-<a href='?sort=6&reverse=1'>Size (largest first)</a> |
-<a href='?sort=8&reverse=1'>Last modified (recent first)</a> |
-<a href='?sort=10&reverse=1'>Name (Z to A)</a></span><br>
-<br><a href='?zip=1'>download as zip</a>
+<a href='?sort=6&reverse'>Size (largest first)</a> |
+<a href='?sort=8&reverse'>Last modified (recent first)</a> |
+<a href='?sort=10&reverse'>Name (Z to A)</a></span><br>
+<br><a href='?zip'>download as zip</a>
 <hr>
 ''',
     # no files
@@ -48,7 +48,7 @@ images/videos to the selected folder and refresh the page to see them</p>'''
 )
 
 
-def sort(files, num=8, reverse=False):
+def sort(files, num, reverse):
     # if num is an os.stat item, sort by stat, otherwise sort alphabetically
     if num < 10:
         fdict = {}
@@ -60,19 +60,6 @@ def sort(files, num=8, reverse=False):
     else:
         files.sort(reverse=reverse)
         return files
-
-
-def handle_queries(path, query):
-    queries = urlparse.parse_qs(path.split('?', 1)[1])
-
-    qlist = []
-    for q in query:
-        if q in queries:
-            qlist.append(int(queries[q][0]))
-        else:
-            qlist.append(False)
-
-    return qlist
 
 
 class coolHandler(http.server.SimpleHTTPRequestHandler):
@@ -117,20 +104,26 @@ class coolHandler(http.server.SimpleHTTPRequestHandler):
         files = os.listdir()
         self.send_response(200)
 
-        # get queries to sort files and find out to use html or zip
-        queries = ('sort', 'reverse', 'zip')
+        # handle queries
         if '?' in self.path:
-            num, reverse, zipf = handle_queries(self.path, queries)
+            queries = self.path.split('?', 1)[1]
+            num, reverse, zipf = (8, False, False) # default values
+
+            for query in urlparse.parse_qs(queries, True).items():
+                match query:
+                    case ('sort', s):
+                        num = int(s[0])
+                    case ('reverse', _):
+                        reverse = True
+                    case ('zip', _):
+                        zipf = True
+
             if zipf:
                 wfile = self.generate_zip(files)
-            elif num:
-                if reverse >= 1:
-                    files = sort(files, num, True)
-                else:
-                    files = sort(files, num)
+            else:
+                files = sort(files, num, reverse)
                 wfile = self.generate_html(files)
         else:
-            files = sort(files)
             wfile = self.generate_html(files)
 
         # sends the content
