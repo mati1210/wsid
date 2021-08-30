@@ -14,7 +14,8 @@ import io
 
 
 # extensions for supported images/videos
-imgext = ('.jpg', '.jpeg', '.jfif', '.png', '.avif', '.jxl', '.gif', '.webp')
+imgext = ('.jpg', '.jpeg', '.jfif', '.png',
+          '.avif', '.jxl', '.gif', '.webp')
 vidext = ('.mp4', '.mkv', '.webm')
 
 html = (
@@ -48,7 +49,8 @@ images/videos to the selected folder and refresh the page to see them</p>'''
 )
 
 
-def sort(files, num, reverse):
+# file sort
+def fsort(files, num, reverse):
     # if num is an os.stat item, sort by stat, otherwise sort alphabetically
     if num < 10:
         fdict = {}
@@ -56,7 +58,8 @@ def sort(files, num, reverse):
             fdict |= {
                 f: os.stat(f)[num]
             }
-        return dict(sorted(fdict.items(), key=lambda x: x[1], reverse=reverse)).keys()
+        return dict(sorted(fdict.items(),
+                           key=lambda x: x[1], reverse=reverse)).keys()
     else:
         files.sort(reverse=reverse)
         return files
@@ -87,8 +90,8 @@ def generate_html(files):
         f = escape(f)
 
         if flower.endswith(imgext):
-            htmltags.append(f'''<a href="{url}" download>
-                            <img src="{url}" alt="{f}"></a>''')
+            htmltags.append(f'''<a href="{url}" download><img src="{url}"
+                            alt="{f}"></a>''')
         elif flower.endswith(vidext):
             htmltags.append(f'<video src="{url}" controls>"{f}"</video>')
 
@@ -111,7 +114,7 @@ class coolHandler(http.server.SimpleHTTPRequestHandler):
             for query in urlparse.parse_qs(queries, True).items():
                 match query:
                     case ('sort', s):
-                        num = int(s[0])
+                        sort = int(s[0])
                     case ('reverse', _):
                         reverse = True
                     case ('zip', _):
@@ -125,7 +128,7 @@ class coolHandler(http.server.SimpleHTTPRequestHandler):
             wfile = generate_zip(files)
         else:
             self.send_header('Content-type', 'text/html')
-            files = sort(files, sort, reverse)
+            files = fsort(files, sort, reverse)
             wfile = generate_html(files)
 
         self.send_header('Content-Length', str(len(wfile)))
