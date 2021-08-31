@@ -157,26 +157,19 @@ def ip():
         return s.getsockname()[0]
 
 
-if __name__ == '__main__':
-
+def main():
     # try to get directory from cli, otherwise try to run gui
     try:
         root = sys.argv[1]
     except IndexError:
         try:
-            from PyQt5.QtWidgets import QApplication, QFileDialog, QWidget
+            from PyQt5.QtWidgets import QApplication, QFileDialog
         except ModuleNotFoundError:
             print('directory not specified and PyQt5 not installed.')
             sys.exit(1)
 
-        class gui(QWidget):
-            def __init__(self):
-                super().__init__()
-                global root
-                root = QFileDialog.getExistingDirectory()
-
-        app = QApplication(sys.argv)
-        gui()
+        gui = QApplication(sys.argv)
+        root = QFileDialog.getExistingDirectory()
 
     try:
         os.chdir(root)
@@ -198,3 +191,7 @@ if __name__ == '__main__':
         httpd.serve_forever()
     except KeyboardInterrupt:
         httpd.server_close()
+
+
+if __name__ == '__main__':
+    main()
