@@ -16,6 +16,8 @@ also run
 pip install PyQt5
 ```
 if you'd like to run the gui.
+### else
+get latest release from [the releases page](https://github.com/matheuz1210/wsid/releases) and copy wsid to $PATH
 ## usage
 just
 ```
