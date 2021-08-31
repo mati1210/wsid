@@ -1,3 +1,4 @@
 __pycache__/
 *.py?
-*.egg_info/
+*.egg-info/
+dist/

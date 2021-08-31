@@ -13,7 +13,7 @@ import zipfile
 import io
 
 
-__version__ = '0.1'
+__version__ = '0.2'
 
 # extensions for supported images/videos
 imgext = ('.jpg', '.jpeg', '.jfif', '.png', '.avif', '.jxl', '.gif', '.webp')
