@@ -13,10 +13,11 @@ import zipfile
 import io
 
 
-__version__ = '0.2'
+__version__ = '1.0'
 
 # extensions for supported images/videos
-imgext = ('.jpg', '.jpeg', '.jfif', '.png', '.avif', '.jxl', '.gif', '.webp')
+imgext = ('.jpg', '.jpeg', '.jfif', '.png',
+          '.avif', '.jxl', '.gif', '.webp')
 vidext = ('.mp4', '.mkv', '.webm')
 
 html = (
@@ -37,10 +38,10 @@ html = (
 <a href='?sort=8'>Last modified (oldest first)</a> |
 <a href='?sort=10'>Name (A to Z)</a></span><br>
 <span>
-<a href='?sort=6&reverse=1'>Size (largest first)</a> |
-<a href='?sort=8&reverse=1'>Last modified (recent first)</a> |
-<a href='?sort=10&reverse=1'>Name (Z to A)</a></span><br>
-<br><a href='?zip=1'>download as zip</a>
+<a href='?sort=6&reverse'>Size (largest first)</a> |
+<a href='?sort=8&reverse'>Last modified (recent first)</a> |
+<a href='?sort=10&reverse'>Name (Z to A)</a></span><br>
+<br><a href='?zip'>download as zip</a>
 <hr>
 ''',
     # no files
@@ -50,7 +51,8 @@ images/videos to the selected folder and refresh the page to see them</p>'''
 )
 
 
-def sort(files, num=8, reverse=False):
+# file sort
+def fsort(files, num, reverse):
     # if num is an os.stat item, sort by stat, otherwise sort alphabetically
     if num < 10:
         fdict = {}
@@ -58,84 +60,79 @@ def sort(files, num=8, reverse=False):
             fdict |= {
                 f: os.stat(f)[num]
             }
-        return dict(sorted(fdict.items(), key=lambda x: x[1], reverse=reverse)).keys()
+        return dict(sorted(fdict.items(),
+                           key=lambda x: x[1], reverse=reverse)).keys()
     else:
         files.sort(reverse=reverse)
         return files
 
 
-def handle_queries(path, query):
-    queries = urlparse.parse_qs(path.split('?', 1)[1])
+def generate_zip(files):
+    fd = io.BytesIO()
+    flist = []
 
-    qlist = []
-    for q in query:
-        if q in queries:
-            qlist.append(int(queries[q][0]))
-        else:
-            qlist.append(False)
+    for f in files:
+        flower = f.lower()
 
-    return qlist
+        if flower.endswith(imgext + vidext):
+            flist.append(f)
+
+    with zipfile.ZipFile(fd, 'a') as zf:
+        [zf.write(f) for f in flist]
+
+    return fd.getbuffer()
+
+
+def generate_html(files):
+    htmltags = []
+
+    for f in files:
+        flower = f.lower()
+        url = urlparse.quote(f)
+        f = escape(f)
+
+        if flower.endswith(imgext):
+            htmltags.append(f'''<a href="{url}" download><img src="{url}"
+                            alt="{f}"></a>''')
+        elif flower.endswith(vidext):
+            htmltags.append(f'<video src="{url}" controls>"{f}"</video>')
+
+    if not htmltags:
+        return bytes(html[0] + html[3] + html[1], 'utf-8')
+
+    return bytes(html[0] + html[2] + '\n'.join(htmltags) + html[1], 'utf-8')
 
 
 class coolHandler(http.server.SimpleHTTPRequestHandler):
 
-    def generate_zip(self, files):
-        self.send_header('Content-type', 'application/zip')
-        fd = io.BytesIO()
-        flist = []
-
-        for f in files:
-            flower = f.lower()
-
-            if flower.endswith(imgext + vidext):
-                flist.append(f)
-
-        with zipfile.ZipFile(fd, 'a') as zf:
-            [zf.write(f) for f in flist]
-
-        return fd.getbuffer()
-
-    def generate_html(self, files):
-        self.send_header('Content-type', 'text/html')
-        htmltags = []
-
-        for f in files:
-            flower = f.lower()
-            url = urlparse.quote(f)
-            f = escape(f)
-
-            if flower.endswith(imgext):
-                htmltags.append(f'''<a href="{url}" download>
-                                <img src="{url}" alt="{f}"></a>''')
-            elif flower.endswith(vidext):
-                htmltags.append(f'<video src="{url}" controls>"{f}"</video>')
-
-        if not htmltags:
-            return bytes(html[0] + html[3] + html[1], 'utf-8')
-
-        return bytes(html[0] + html[2] + '\n'.join(htmltags) + html[1], 'utf-8')
-
     def list_directory(self, path):
         files = os.listdir()
-        self.send_response(200)
 
-        # get queries to sort files and find out to use html or zip
-        queries = ('sort', 'reverse', 'zip')
+        # handle queries
+        sort, reverse, zipf = (8, False, False)  # default query values
+
         if '?' in self.path:
-            num, reverse, zipf = handle_queries(self.path, queries)
-            if zipf:
-                wfile = self.generate_zip(files)
-            elif num:
-                if reverse >= 1:
-                    files = sort(files, num, True)
-                else:
-                    files = sort(files, num)
-                wfile = self.generate_html(files)
-        else:
-            files = sort(files)
-            wfile = self.generate_html(files)
+            queries = self.path.split('?', 1)[1]
+            for query in urlparse.parse_qs(queries, True).items():
+                match query:
+                    case ('sort', s):
+                        sort = int(s[0])
+                    case ('reverse', _):
+                        reverse = True
+                    case ('zip', _):
+                        zipf = True
 
         # sends the content
+        self.send_response(200)
+
+        if zipf:
+            self.send_header('Content-type', 'application/zip')
+            wfile = generate_zip(files)
+        else:
+            self.send_header('Content-type', 'text/html')
+            files = fsort(files, sort, reverse)
+            wfile = generate_html(files)
+
         self.send_header('Content-Length', str(len(wfile)))
         self.end_headers()
         self.wfile.write(wfile)
