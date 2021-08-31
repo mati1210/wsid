@@ -1,4 +1,4 @@
-# wsid 0.2
+# wsid 0.3
 
 wsid (web show image dir), inspired by [woof](https://github.com/simon-budig/woof), runs a webserver that generates a HTML with every image/video on a directory
 see example [here.](https://youtu.be/23L44tVQZZE)
