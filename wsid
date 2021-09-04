@@ -105,6 +105,8 @@ def generate_html(files):
 
 class coolHandler(http.server.SimpleHTTPRequestHandler):
 
+    server_version = 'wsid/' + __version__
+
     def list_directory(self, path):
         files = os.listdir()
 
