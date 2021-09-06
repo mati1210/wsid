@@ -36,8 +36,7 @@ html = (
 <span>
 <a href='?sort=6'>Size (smallest first)</a> |
 <a href='?sort=8'>Last modified (oldest first)</a> |
-<a href='?sort=10'>Name (A to Z)</a></span><br>
-<span>
+<a href='?sort=10'>Name (A to Z)</a><br>
 <a href='?sort=6&reverse'>Size (largest first)</a> |
 <a href='?sort=8&reverse'>Last modified (recent first)</a> |
 <a href='?sort=10&reverse'>Name (Z to A)</a></span><br>
@@ -92,8 +91,7 @@ def generate_html(files):
         f = escape(f)
 
         if flower.endswith(imgext):
-            htmltags.append(f'''<a href="{url}" download><img src="{url}"
-                            alt="{f}"></a>''')
+            htmltags.append(f'<a href="{url}" download><img src="{url}" alt="{f}"></a>')
         elif flower.endswith(vidext):
             htmltags.append(f'<video src="{url}" controls>"{f}"</video>')
 
