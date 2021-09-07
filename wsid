@@ -54,13 +54,8 @@ images/videos to the selected folder and refresh the page to see them</p>'''
 def fsort(files, num, reverse):
     # if num is an os.stat item, sort by stat, otherwise sort alphabetically
     if num < 10:
-        fdict = {}
-        for f in files:
-            fdict |= {
-                f: os.stat(f)[num]
-            }
-        return dict(sorted(fdict.items(),
-                           key=lambda x: x[1], reverse=reverse)).keys()
+        fdict = {f: os.stat(f)[num] for f in files}
+        return dict(sorted(fdict.items(), key=lambda x: x[1], reverse=reverse)).keys()
     else:
         files.sort(reverse=reverse)
         return files
@@ -68,13 +63,7 @@ def fsort(files, num, reverse):
 
 def generate_zip(files):
     fd = io.BytesIO()
-    flist = []
-
-    for f in files:
-        flower = f.lower()
-
-        if flower.endswith(imgext + vidext):
-            flist.append(f)
+    flist = [f for f in files if f.lower().endswith(imgext + vidext)]
 
     with zipfile.ZipFile(fd, 'a') as zf:
         [zf.write(f) for f in flist]
