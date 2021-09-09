@@ -9,13 +9,9 @@ currently requires python 3.9 (when wsid 1.0 will be released, that requirement 
 [wsid](https://aur.archlinux.org/wsid) and [wsid-git](https://aur.archlinux.org/wsid-git) are avaliable on the AUR.
 ### pip
 ```
-pip install wsid
+pip install 'wsid[gui]'
 ```
-also run 
-```
-pip install PyQt5
-```
-if you'd like to run the gui.
+if that doesn't work, omit `[gui]` to install without the gui
 ### else
 get latest release from [the releases page](https://github.com/matheuz1210/wsid/releases) and copy wsid to $PATH
 ## usage
@@ -27,4 +23,4 @@ or
 ```
 wsid
 ```
-to run the gui (requires PyQt5)
+to run the gui
