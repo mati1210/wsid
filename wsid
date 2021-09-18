@@ -20,19 +20,15 @@ IMGEXT = ('.jpg', '.jpeg', '.jfif', '.png',
           '.avif', '.jxl', '.gif', '.webp')
 VIDEXT = ('.mp4', '.mkv', '.webm')
 
-HTML = (
-    # start
-    """<!doctype html><html>
+HTML = {
+
+    'header': """<!doctype html><html>
 <head><meta charset='UTF-8'><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>img,video{max-width:100%;height:auto}</style></head><body>
-""",
-    # end
-    """
-</body></html>
-""",
-    # queries
-    """<hr><b>Sort by</b><br>
-<span>
+<style>img,video{max-width:100%;height:auto}</style></head><body>\n""",
+
+    'footer': '\n</body></html>',
+
+    'queries': """<hr><b>Sort by</b><br><span>
 <a href='?sort=6'>Size (smallest first)</a> |
 <a href='?sort=8'>Last modified (oldest first)</a> |
 <a href='?sort=10'>Name (A to Z)</a><br>
@@ -41,13 +37,12 @@ HTML = (
 <a href='?sort=10&reverse'>Name (Z to A)</a></span><br>
 <br><a href='?zip'>download as zip</a>
 <hr id='top'>
-<a href='#top' style='position:fixed;bottom:1em;right:1em;background-color:#FFF'>top</a>
-""",
-    # no files
-    """<h1>No supported file types</h1>
+<a href='#top' style='position:fixed;bottom:1em;right:1em;background-color:#FFF'>top</a>\n""",
+
+    'noFiles': """<h1>No supported file types</h1>
 <p>this is where images/videos would show up. if there was some!<br><br>add
 images/videos to the selected folder and refresh the page to see them</p>"""
-)
+}
 
 
 # file sort
@@ -85,9 +80,9 @@ def generate_html(files):
             htmltags.append(f'<video src="{url}" controls>"{f}"</video>')
 
     if not htmltags:
-        return bytes(HTML[0] + HTML[3] + HTML[1], 'utf-8')
+        return bytes(HTML['header'] + HTML['noFiles'] + HTML['footer'], 'utf-8')
 
-    return bytes(HTML[0] + HTML[2] + '\n'.join(htmltags) + HTML[1], 'utf-8')
+    return bytes(HTML['header'] + HTML['queries'] + '\n'.join(htmltags) + HTML['footer'], 'utf-8')
 
 
 class coolHandler(http.server.SimpleHTTPRequestHandler):
