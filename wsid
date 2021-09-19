@@ -84,10 +84,9 @@ def fsort(files, sort):
 
 def generate_zip(files):
     fd = io.BytesIO()
-    flist = [f for f in files if f.lower().endswith(IMGEXT + VIDEXT)]
 
     with zipfile.ZipFile(fd, 'a') as zf:
-        [zf.write(f) for f in flist]
+        [zf.write(f) for f in files if f.lower().endswith(IMGEXT + VIDEXT)]
 
     return fd.getbuffer()
 
