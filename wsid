@@ -29,13 +29,13 @@ HTML = {
     'footer': '\n</body></html>',
 
     'queries': """<hr><b>Sort by</b><br><span>
-<a href='?sort=6'>Size (smallest first)</a> |
-<a href='?sort=8'>Last modified (oldest first)</a> |
-<a href='?sort=10'>Name (A to Z)</a><br>
-<a href='?sort=6&reverse'>Size (largest first)</a> |
-<a href='?sort=8&reverse'>Last modified (recent first)</a> |
-<a href='?sort=10&reverse'>Name (Z to A)</a></span><br>
-<br><a href='?zip'>download as zip</a>
+<a href='?sort=sm'>Size (smallest first)</a> |
+<a href='?sort=old'>Last modified (oldest first)</a> |
+<a href='?sort=az'>Name (A to Z)</a><br>
+<a href='?sort=big'>Size (biggest first)</a> |
+<a href='?sort=new'>Last modified (newest first)</a> |
+<a href='?sort=za'>Name (Z to A)</a></span>
+<br><br><a href='?zip'>download as zip</a>
 <hr id='top'>
 <a href='#top' style='position:fixed;bottom:1em;right:1em;background-color:#FFF'>top</a>\n""",
 
@@ -46,14 +46,38 @@ images/videos to the selected folder and refresh the page to see them</p>"""
 
 
 # file sort
-def fsort(files, num, reverse):
-    # if num is an os.stat item, sort by stat, otherwise sort alphabetically
-    if num < 10:
-        fdict = {f: os.stat(f)[num] for f in files}
-        return dict(sorted(fdict.items(), key=lambda x: x[1], reverse=reverse)).keys()
-    else:
-        files.sort(reverse=reverse)
-        return files
+def fsort(files, sort):
+    reverse = False
+
+    match sort:
+        case 'new':  # last modified (newest first)
+            sort = 8
+            reverse = True
+
+        case 'az':   # a-z
+            files.sort(reverse=False)
+            return files
+
+        case 'sm':   # size (smallest first)
+            sort = 6
+
+        case 'old':  # last modified (oldest first)
+            sort = 8
+
+        case 'za':   # z-a
+            files.sort(reverse=True)
+            return files
+
+        case 'big':  # size (biggest first)
+            sort = 6
+            reverse = True
+
+        case _:
+            sort = 8
+            reverse = True
+
+    files.sort(key=lambda x: os.stat(x)[sort], reverse=reverse)
+    return files
 
 
 def generate_zip(files):
@@ -100,7 +124,7 @@ class coolHandler(http.server.SimpleHTTPRequestHandler):
             for query in urlparse.parse_qs(queries, True).items():
                 match query:
                     case ('sort', s):
-                        sort = int(s[0])
+                        sort = s[0]
                     case ('reverse', _):
                         reverse = True
                     case ('zip', _):
@@ -114,7 +138,7 @@ class coolHandler(http.server.SimpleHTTPRequestHandler):
             wfile = generate_zip(files)
         else:
             self.send_header('Content-type', 'text/html')
-            files = fsort(files, sort, reverse)
+            files = fsort(files, sort)
             wfile = generate_html(files)
 
         self.send_header('Content-Length', str(len(wfile)))
