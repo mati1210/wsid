@@ -26,7 +26,7 @@ HTML = {
 <head><meta charset='UTF-8'><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>img,video{max-width:100%;height:auto}</style></head><body>\n""",
 
-    'footer': '\n<body><html>',
+    'footer': '\n</body></html>',
 
     'queries': """<hr><b>Sort by</b><br>
 <a href='?s=sm&p={p}&i={i}'>Size (smallest first)</a> |
