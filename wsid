@@ -26,19 +26,29 @@ HTML = {
 <head><meta charset='UTF-8'><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>img,video{max-width:100%;height:auto}</style></head><body>\n""",
 
-    'footer': '\n</body></html>',
+    'footer': '\n<body><html>',
 
-    'queries': """<hr><b>Sort by</b><br><span>
-<a href='?sort=sm'>Size (smallest first)</a> |
-<a href='?sort=old'>Last modified (oldest first)</a> |
-<a href='?sort=az'>Name (A to Z)</a><br>
-<a href='?sort=big'>Size (biggest first)</a> |
-<a href='?sort=new'>Last modified (newest first)</a> |
-<a href='?sort=za'>Name (Z to A)</a></span>
-<br><br><a href='?zip'>download as zip</a>
+    'queries': """<hr><b>Sort by</b><br>
+<a href='?s=sm&p={p}&i={i}'>Size (smallest first)</a> |
+<a href='?s=old&p={p}&i={i}'>Last modified (oldest first)</a> |
+<a href='?s=az&p={p}&i={i}'>Name (A to Z)</a><br>
+<a href='?s=big&p={p}&i={i}'>Size (biggest first)</a> |
+<a href='?s=new&p={p}&i={i}'>Last modified (newest first)</a> |
+<a href='?s=za&p={p}&i={i}'>Name (Z to A)</a>
+<br><br><a href='?z'>download as zip</a><br><br>
+<a href='?s={s}&p={pp}&i={i}'>Previous</a>
+<b> Page {p} </b>
+<a href='?s={s}&p={pn}&i={i}'>Next</a>
+<br><br><b>Images per page</b><br>
+<a href='?s={s}&p={p}&i=20'>20</a> | <a href='?s={s}&p={p}&i=80'>80</a> |
+<a href='?s={s}&p={p}&i=100'>100</a> | <a href='?s={s}&p={p}&i=200'>200</a>
 <hr id='top'>
 <a href='#top' style='position:fixed;bottom:1em;right:1em;background-color:#FFF'>top</a>\n""",
 }
+
+
+class query:
+    pass  # vars initialized on list_directory
 
 
 # file sort
@@ -46,10 +56,6 @@ def fsort(files, sort):
     reverse = False
 
     match sort:
-        case 'new':  # last modified (newest first)
-            sort = 8
-            reverse = True
-
         case 'az':   # a-z
             files.sort(reverse=False)
             return files
@@ -68,7 +74,7 @@ def fsort(files, sort):
             sort = 6
             reverse = True
 
-        case _:
+        case _:  # last modified (newest first)
             sort = 8
             reverse = True
 
@@ -99,7 +105,9 @@ def generate_html(files):
         elif flower.endswith(VIDEXT):
             htmltags.append(f'<video src="{url}" controls>"{f}"</video>')
 
-    return bytes(HTML['header'] + HTML['queries'] + '\n'.join(htmltags) + HTML['footer'], 'utf-8')
+    return bytes(HTML['header'] + HTML['queries'].format(p=query.page, pp=query.page - 1,
+                                                         pn=query.page + 1, s=query.sort,
+                 i=query.imgcount) + '\n'.join(htmltags) + HTML['footer'], 'utf-8')
 
 
 class coolHandler(http.server.SimpleHTTPRequestHandler):
@@ -110,28 +118,34 @@ class coolHandler(http.server.SimpleHTTPRequestHandler):
         files = os.listdir()
 
         # handle queries
-        sort, reverse, zipf = (8, False, False)  # default query values
+        query.imgcount, query.page, query.sort, query.zipf = 20, 0, 'new', False  # default values
 
         if '?' in self.path:
-            queries = self.path.split('?', 1)[1]
-            for query in urlparse.parse_qs(queries, True).items():
-                match query:
-                    case ('sort', s):
-                        sort = s[0]
-                    case ('reverse', _):
-                        reverse = True
-                    case ('zip', _):
-                        zipf = True
+            queries = urlparse.parse_qs(self.path.split('?', 1)[1], True)
+
+            if 'z' in queries:
+                query.zipf = True
+            else:
+                try:
+                    query.imgcount = int(queries['i'][0])
+                    query.page = int(queries['p'][0])
+                    query.sort = queries['s'][0]
+                except KeyError:
+                    pass
+
+                if query.page < 0: query.page = 0
 
         # sends the content
         self.send_response(200)
 
-        if zipf:
+        if query.zipf:
             self.send_header('Content-type', 'application/zip')
             wfile = generate_zip(files)
         else:
             self.send_header('Content-type', 'text/html')
-            files = fsort(files, sort)
+            if len(files) < (index := query.page * query.imgcount): index = 0
+
+            files = fsort(files, query.sort)[index:index + query.imgcount]
             wfile = generate_html(files)
 
         self.send_header('Content-Length', str(len(wfile)))
