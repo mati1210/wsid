@@ -81,7 +81,6 @@ def fsort(files, sort):
     files.sort(key=lambda x: os.stat(x)[sort], reverse=reverse)
     return files
 
-
 def generate_zip(files):
     fd = io.BytesIO()
 
@@ -141,10 +140,11 @@ class coolHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header('Content-type', 'application/zip')
             wfile = generate_zip(files)
         else:
-            self.send_header('Content-type', 'text/html')
-            if len(files) < (index := query.page * query.imgcount): index = 0
-
+            index = query.page * query.imgcount
+            if len(files) < index: index = 0
             files = fsort(files, query.sort)[index:index + query.imgcount]
+
+            self.send_header('Content-type', 'text/html')
             wfile = generate_html(files)
 
         self.send_header('Content-Length', str(len(wfile)))
@@ -181,6 +181,7 @@ def main():
 
         gui = QApplication(sys.argv)
         root = QFileDialog.getExistingDirectory()
+        del(gui)
 
     try:
         os.chdir(root)
