@@ -148,6 +148,12 @@ class coolHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(wfile)
 
+    def do_GET(self):
+        try:
+            return super().do_GET()
+        except (BrokenPipeError, ConnectionAbortedError):
+            pass
+
 
 # for ipv6 support
 class coolServer(http.server.ThreadingHTTPServer):
