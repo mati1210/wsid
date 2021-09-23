@@ -40,7 +40,7 @@ HTML = {
 
 
 class query:
-    pass  # vars initialized on list_directory
+    imgcount, page, sort, zipf = 20, 0, 'new', False  # default query values
 
 
 # file sort
@@ -48,7 +48,7 @@ def fsort(files, sort):
     reverse = False
 
     if sort == 'az':     # a-z
-        files.sort(reverse=False)
+        files.sort()
         return files
 
     elif sort == 'za':   # z-a
@@ -96,8 +96,8 @@ def generate_html(files):
 
     h = HTML['header'] + HTML['queries'] + '\n'.join(htmltags) + HTML['queries'] + HTML['footer']
 
-    return bytes(h.format(p=query.page, pp=query.page - 1, pn=query.page + 1,
-                          s=query.sort, i=query.imgcount), 'utf-8')
+    return bytes(h.format(p=query.page, pp=query.page - 1, pn=query.page + 1, s=query.sort,
+                          i=query.imgcount), 'utf-8')
 
 
 class coolHandler(http.server.SimpleHTTPRequestHandler):
@@ -108,8 +108,6 @@ class coolHandler(http.server.SimpleHTTPRequestHandler):
         files = os.listdir()
 
         # handle queries
-        query.imgcount, query.page, query.sort, query.zipf = 20, 0, 'new', False  # default values
-
         if '?' in self.path:
             queries = urllib.parse.parse_qs(self.path.split('?', 1)[1], True)
 
