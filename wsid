@@ -3,14 +3,9 @@
 # SPDX-FileCopyrightText: matheuz1210 <matheuz1210@gmail.com>
 # created 21Jul2021, 00:50AM -0300
 
-import os
-import sys
-import http.server
-import socket
-import urllib.parse as urlparse
-import html
-import zipfile
-import io
+import os, sys
+import http.server, socket, urllib.parse, html
+import zipfile, io
 
 
 __version__ = '1.0'
@@ -91,7 +86,7 @@ def generate_html(files):
 
     for f in files:
         flower = f.lower()
-        url = urlparse.quote(f)
+        url = urllib.parse.quote(f)
         f = html.escape(f)
 
         if flower.endswith(IMGEXT):
@@ -116,7 +111,7 @@ class coolHandler(http.server.SimpleHTTPRequestHandler):
         query.imgcount, query.page, query.sort, query.zipf = 20, 0, 'new', False  # default values
 
         if '?' in self.path:
-            queries = urlparse.parse_qs(self.path.split('?', 1)[1], True)
+            queries = urllib.parse.parse_qs(self.path.split('?', 1)[1], True)
 
             if 'z' in queries:
                 query.zipf = True
