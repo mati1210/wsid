@@ -48,12 +48,10 @@ def fsort(files, sort):
     reverse = False
 
     if sort == 'az':     # a-z
-        files.sort()
-        return files
+        return sorted(files)
 
     elif sort == 'za':   # z-a
-        files.sort(reverse=True)
-        return files
+        return sorted(files, reverse=True)
 
     elif sort == 'sm':   # size (smallest first)
         sort = 6
@@ -69,8 +67,8 @@ def fsort(files, sort):
         sort = 8
         reverse = True
 
-    files.sort(key=lambda x: os.stat(x)[sort], reverse=reverse)
-    return files
+    return sorted(files, key=lambda x: os.stat(x)[sort], reverse=reverse)
+
 
 def generate_zip(files):
     fd = io.BytesIO()
