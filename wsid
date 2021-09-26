@@ -142,8 +142,8 @@ class coolHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         try:
             return super().do_GET()
-        except (BrokenPipeError, ConnectionAbortedError):
-            pass
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            print(f'{self.path} was interrupted')
 
 
 # for ipv6 support
