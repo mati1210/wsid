@@ -52,28 +52,27 @@ class query:
 def fsort(files, sort):
     reverse = False
 
-    match sort:
-        case 'az':   # a-z
-            files.sort(reverse=False)
-            return files
+    if sort == 'az':     # a-z
+        files.sort(reverse=False)
+        return files
 
-        case 'sm':   # size (smallest first)
-            sort = 6
+    elif sort == 'za':   # z-a
+        files.sort(reverse=True)
+        return files
 
-        case 'old':  # last modified (oldest first)
-            sort = 8
+    elif sort == 'sm':   # size (smallest first)
+        sort = 6
 
-        case 'za':   # z-a
-            files.sort(reverse=True)
-            return files
+    elif sort == 'big':  # size (biggest first)
+        sort = 6
+        reverse = True
 
-        case 'big':  # size (biggest first)
-            sort = 6
-            reverse = True
+    elif sort == 'old':  # last modified (oldest first)
+        sort = 8
 
-        case _:  # last modified (newest first)
-            sort = 8
-            reverse = True
+    else:                # last modified (newest first)
+        sort = 8
+        reverse = True
 
     files.sort(key=lambda x: os.stat(x)[sort], reverse=reverse)
     return files
