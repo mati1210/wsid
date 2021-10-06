@@ -44,14 +44,25 @@ class query:
 
 
 # file sort
-def fsort(files, sort):
+def fsort(files, sort, cache={}):
     reverse = False
 
+    # memoization kinda
+    try:
+        if cache['lfiles'] == files and cache['lsort'] == sort:
+            return cache['sorted']
+    except KeyError:
+        pass
+    cache['lfiles'], cache['lsort'] = files, sort
+
+    # sort
     if sort == 'az':     # a-z
-        return sorted(files)
+        cache['sorted'] = sorted(files)
+        return cache['sorted']
 
     elif sort == 'za':   # z-a
-        return sorted(files, reverse=True)
+        cache['sorted'] = sorted(files, reverse=True)
+        return cache['sorted']
 
     elif sort == 'sm':   # size (smallest first)
         sort = 6
@@ -67,8 +78,9 @@ def fsort(files, sort):
         sort = 8
         reverse = True
 
-    return sorted(files, key=lambda x: os.stat(x)[sort], reverse=reverse)
 
+    cache['sorted'] = sorted(files, key=lambda x: os.stat(x)[sort], reverse=reverse)
+    return cache['sorted']
 
 def generate_zip(files):
     fd = io.BytesIO()
