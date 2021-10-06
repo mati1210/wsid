@@ -143,7 +143,7 @@ class coolHandler(http.server.SimpleHTTPRequestHandler):
         try:
             return super().do_GET()
         except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
-            print(f'{self.path} was interrupted')
+            print(f'{self.path} was interrupted', file=sys.stderr)
 
 
 # for ipv6 support
@@ -170,7 +170,7 @@ def main():
         try:
             from PyQt5.QtWidgets import QApplication, QFileDialog
         except ModuleNotFoundError:
-            print('directory not specified and PyQt5 not installed.')
+            print('directory not specified and PyQt5 not installed.', file=sys.stderr)
             sys.exit(1)
 
         gui = QApplication(sys.argv)
@@ -180,7 +180,7 @@ def main():
     try:
         os.chdir(root)
     except (NotADirectoryError, FileNotFoundError):
-        print(f'"{root}" not found or is not a directory')
+        print(f'"{root}" not found or is not a directory', file=sys.stderr)
         sys.exit(1)
 
     # run server
