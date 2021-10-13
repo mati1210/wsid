@@ -19,7 +19,7 @@ HTML = {
 
     'header': """<!doctype html><html>
 <head><meta charset='UTF-8'><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>img,video{{max-width:100%;height:auto}}</style></head><body id='top'>
+<style>img,video{max-width:100%;height:auto}</style></head><body id='top'>
 <a href='#top' style='position:fixed;bottom:1em;right:1em;background-color:#FFF'>top</a>\n""",
 
     'footer': '\n</body></html>',
@@ -104,10 +104,11 @@ def generate_html(files):
         elif flower.endswith(VIDEXT):
             htmltags.append(f'<video src="{url}" controls>"{f}"</video>')
 
-    h = HTML['header'] + HTML['queries'] + '\n'.join(htmltags) + HTML['queries'] + HTML['footer']
+    queries = HTML['queries'].format(p=query.page, pp=query.page - 1, pn=query.page + 1,
+                                     s=query.sort, i=query.imgcount)
 
-    return bytes(h.format(p=query.page, pp=query.page - 1, pn=query.page + 1, s=query.sort,
-                          i=query.imgcount), 'utf-8')
+    return bytes(HTML['header'] + queries + '\n'.join(htmltags) + queries + HTML['footer'],
+                 'utf-8')
 
 
 class coolHandler(http.server.SimpleHTTPRequestHandler):
