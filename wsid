@@ -8,7 +8,7 @@ import http.server, socket, urllib.parse, html
 import zipfile, io
 
 
-__version__ = '1.0'
+__version__ = '1.1'
 
 # extensions for supported images/videos
 IMGEXT = ('.jpg', '.jpeg', '.jfif', '.png',
