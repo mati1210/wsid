@@ -78,9 +78,9 @@ def fsort(files, sort, cache={}):
         sort = 8
         reverse = True
 
-
     cache['sorted'] = sorted(files, key=lambda x: os.stat(x)[sort], reverse=reverse)
     return cache['sorted']
+
 
 def generate_zip(files):
     fd = io.BytesIO()
