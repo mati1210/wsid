@@ -97,12 +97,15 @@ def generate_html(files):
     for f in files:
         flower = f.lower()
         url = urllib.parse.quote(f)
-        f = html.escape(f)
+        e = html.escape(f)
 
         if flower.endswith(IMGEXT):
-            htmltags.append(f'<a href="{url}" download><img src="{url}" alt="{f}"></a>')
+            htmltags.append(f'<a href="{url}" download><img src="{url}" alt="{e}"></a>')
         elif flower.endswith(VIDEXT):
-            htmltags.append(f'<video src="{url}" controls>"{f}"</video>')
+            htmltags.append(f'<video src="{url}" controls>"{e}"</video>')
+        elif not os.path.isdir(f):
+            htmltags.append(f'''<br><p>file {e} is not an compatible image/video.
+would you like to <a href="{url}"> download it?</a></p><br>''')
 
     queries = HTML['queries'].format(p=query.page, pp=query.page - 1, pn=query.page + 1,
                                      s=query.sort, i=query.imgcount)
