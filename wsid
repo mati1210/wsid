@@ -200,7 +200,7 @@ def main():
         sys.exit(1)
 
     # run server
-    port = 80
+    port = 80  # for future me: this could've been an walrus operator. but i already set minver 3.7
     try:
         httpd = coolServer(('::', port), coolHandler)
     except PermissionError:
