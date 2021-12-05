@@ -38,10 +38,6 @@ HTML = {
 }
 
 
-class query:
-    imgcount, page, sort, zipf = 20, 0, 'new', False  # default query values
-
-
 # file sort
 def fsort(files, sort, cache={}):
     reverse = False
@@ -81,41 +77,42 @@ def fsort(files, sort, cache={}):
     return cache['sorted']
 
 
-def generate_zip(files):
-    fd = io.BytesIO()
-
-    with zipfile.ZipFile(fd, 'a') as zf:
-        [zf.write(f) for f in files if f.lower().endswith(IMGEXT + VIDEXT)]
-
-    return fd.getbuffer()
-
-
-def generate_html(files):
-    htmltags = []
-
-    for f in files:
-        flower = f.lower()
-        url = urllib.parse.quote(f)
-        e = html.escape(f)
-
-        if flower.endswith(IMGEXT):
-            htmltags.append(f'<a href="{url}" download><img src="{url}" alt="{e}"></a>')
-        elif flower.endswith(VIDEXT):
-            htmltags.append(f'<video src="{url}" controls>"{e}"</video>')
-        elif not os.path.isdir(f):
-            htmltags.append(f'''<br><p>file {e} is not an compatible image/video.
-would you like to <a href="{url}"> download it?</a></p><br>''')
-
-    queries = HTML['queries'].format(p=query.page, pp=query.page - 1, pn=query.page + 1,
-                                     s=query.sort, i=query.imgcount)
-
-    return bytes(HTML['header'] + queries + '\n'.join(htmltags) + queries + HTML['footer'],
-                 'utf-8')
-
-
 class coolHandler(http.server.SimpleHTTPRequestHandler):
 
     server_version = 'wsid/' + __version__
+    imgcount, page, sort, zipf = 20, 0, 'new', False  # queries
+
+    def generate_zip(self, files):
+        self.send_header('Content-type', 'application/zip')
+        fd = io.BytesIO()
+
+        with zipfile.ZipFile(fd, 'a') as zf:
+            [zf.write(f) for f in files if f.lower().endswith(IMGEXT + VIDEXT)]
+
+        return fd.getbuffer()
+
+    def generate_html(self, files):
+        self.send_header('Content-type', 'text/html')
+        htmltags = []
+
+        for f in files:
+            flower = f.lower()
+            url = urllib.parse.quote(f)
+            e = html.escape(f)
+
+            if flower.endswith(IMGEXT):
+                htmltags.append(f'<a href="{url}" download><img src="{url}" alt="{e}"></a>')
+            elif flower.endswith(VIDEXT):
+                htmltags.append(f'<video src="{url}" controls>"{e}"</video>')
+            elif not os.path.isdir(f):
+                htmltags.append(f'''<br><p>file {e} is not an compatible image/video.
+would you like to <a href="{url}"> download it?</a></p><br>''')
+
+        queries = HTML['queries'].format(p=self.page, pp=self.page - 1, pn=self.page + 1,
+                                         s=self.sort, i=self.imgcount)
+
+        return bytes(HTML['header'] + queries + '\n'.join(htmltags) + queries + HTML['footer'],
+                     'utf-8')
 
     def list_directory(self, path):
         files = os.listdir()
@@ -125,30 +122,28 @@ class coolHandler(http.server.SimpleHTTPRequestHandler):
             queries = urllib.parse.parse_qs(self.path.split('?', 1)[1], True)
 
             if 'z' in queries:
-                query.zipf = True
+                self.zipf = True
             else:
                 try:
-                    query.imgcount = int(queries['i'][0])
-                    query.page = int(queries['p'][0])
-                    query.sort = queries['s'][0]
+                    self.imgcount = int(queries['i'][0])
+                    self.page = int(queries['p'][0])
+                    self.sort = queries['s'][0]
                 except KeyError:
                     pass
 
-                if query.page < 0: query.page = 0
+                if self.page < 0: self.page = 0
 
         # sends the content
         self.send_response(200)
 
-        if query.zipf:
-            self.send_header('Content-type', 'application/zip')
-            wfile = generate_zip(files)
+        if self.zipf:
+            wfile = self.generate_zip(files)
         else:
-            index = query.page * query.imgcount
+            index = self.page * self.imgcount
             if len(files) < index: index = 0
-            files = fsort(files, query.sort)[index:index + query.imgcount]
+            files = fsort(files, self.sort)[index:index + self.imgcount]
 
-            self.send_header('Content-type', 'text/html')
-            wfile = generate_html(files)
+            wfile = self.generate_html(files)
 
         self.send_header('Content-Length', str(len(wfile)))
         self.end_headers()
