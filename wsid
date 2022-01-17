@@ -7,23 +7,19 @@ import http.server, socket, urllib.parse, html
 import zipfile, io
 
 
-__version__ = '1.1'
+__version__ = "1.1"
 
 # extensions for supported images/videos
-IMGEXT = ('.jpg', '.jpeg', '.jfif', '.png',
-          '.avif', '.jxl', '.gif', '.webp')
-VIDEXT = ('.mp4', '.mkv', '.webm')
+IMGEXT = (".jpg", ".jpeg", ".jfif", ".png", ".avif", ".jxl", ".gif", ".webp")
+VIDEXT = (".mp4", ".mkv", ".webm")
 
 HTML = {
-
-    'header': """<!doctype html><html>
+    "header": """<!doctype html><html>
 <head><meta charset='UTF-8'><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>img,video{max-width:100%;height:auto}</style></head><body id='top'>
 <a href='#top' style='position:fixed;bottom:1em;right:1em;background-color:#FFF'>top</a>\n""",
-
-    'footer': '\n</body></html>',
-
-    'queries': """<hr><b>Sort by</b><br>
+    "footer": "\n</body></html>",
+    "queries": """<hr><b>Sort by</b><br>
 <a href='?s=sm&p={p}&i={i}'>Size (smallest first)</a> |
 <a href='?s=old&p={p}&i={i}'>Last modified (oldest first)</a> |
 <a href='?s=az&p={p}&i={i}'>Name (A to Z)</a><br>
@@ -44,55 +40,55 @@ def fsort(files, sort, cache={}):
 
     # memoization kinda
     try:
-        if cache['lfiles'] == files and cache['lsort'] == sort:
-            return cache['sorted']
+        if cache["lfiles"] == files and cache["lsort"] == sort:
+            return cache["sorted"]
     except KeyError:
         pass
-    cache['lfiles'], cache['lsort'] = files, sort
+    cache["lfiles"], cache["lsort"] = files, sort
 
     # sort
-    if sort == 'az':     # a-z
-        cache['sorted'] = sorted(files)
-        return cache['sorted']
+    if sort == "az":  # a-z
+        cache["sorted"] = sorted(files)
+        return cache["sorted"]
 
-    elif sort == 'za':   # z-a
-        cache['sorted'] = sorted(files, reverse=True)
-        return cache['sorted']
+    elif sort == "za":  # z-a
+        cache["sorted"] = sorted(files, reverse=True)
+        return cache["sorted"]
 
-    elif sort == 'sm':   # size (smallest first)
+    elif sort == "sm":  # size (smallest first)
         sort = 6
 
-    elif sort == 'big':  # size (biggest first)
+    elif sort == "big":  # size (biggest first)
         sort = 6
         reverse = True
 
-    elif sort == 'old':  # last modified (oldest first)
+    elif sort == "old":  # last modified (oldest first)
         sort = 8
 
-    else:                # last modified (newest first)
+    else:  # last modified (newest first)
         sort = 8
         reverse = True
 
-    cache['sorted'] = sorted(files, key=lambda x: os.stat(x)[sort], reverse=reverse)
-    return cache['sorted']
+    cache["sorted"] = sorted(files, key=lambda x: os.stat(x)[sort], reverse=reverse)
+    return cache["sorted"]
 
 
 class coolHandler(http.server.SimpleHTTPRequestHandler):
 
-    server_version = 'wsid/' + __version__
-    imgcount, page, sort, zipf = 20, 0, 'new', False  # queries
+    server_version = "wsid/" + __version__
+    imgcount, page, sort, zipf = 20, 0, "new", False  # queries
 
     def generate_zip(self, files):
-        self.send_header('Content-type', 'application/zip')
+        self.send_header("Content-type", "application/zip")
         fd = io.BytesIO()
 
-        with zipfile.ZipFile(fd, 'a') as zf:
+        with zipfile.ZipFile(fd, "a") as zf:
             [zf.write(f) for f in files if f.lower().endswith(IMGEXT + VIDEXT)]
 
         return fd.getbuffer()
 
     def generate_html(self, files):
-        self.send_header('Content-type', 'text/html')
+        self.send_header("Content-type", "text/html")
         htmltags = []
 
         for f in files:
@@ -101,36 +97,46 @@ class coolHandler(http.server.SimpleHTTPRequestHandler):
             e = html.escape(f)
 
             if flower.endswith(IMGEXT):
-                htmltags.append(f'<a href="{url}" download><img src="{url}" alt="{e}"></a>')
+                htmltags.append(
+                    f'<a href="{url}" download><img src="{url}" alt="{e}"></a>'
+                )
             elif flower.endswith(VIDEXT):
                 htmltags.append(f'<video src="{url}" controls>"{e}"</video>')
             elif not os.path.isdir(f):
-                htmltags.append(f'''<br><p>file {e} is not an compatible image/video.
-would you like to <a href="{url}"> download it?</a></p><br>''')
+                htmltags.append(
+                    f"""<br><p>file {e} is not an compatible image/video.
+would you like to <a href="{url}"> download it?</a></p><br>"""
+                )
 
-        queries = HTML['queries'].format(p=self.page, pp=self.page - 1, pn=self.page + 1,
-                                         s=self.sort, i=self.imgcount)
+        queries = HTML["queries"].format(
+            p=self.page,
+            pp=self.page - 1,
+            pn=self.page + 1,
+            s=self.sort,
+            i=self.imgcount,
+        )
 
-        return HTML['header'] + queries + '\n'.join(htmltags) + queries + HTML['footer']
+        return HTML["header"] + queries + "\n".join(htmltags) + queries + HTML["footer"]
 
     def list_directory(self, path):
         files = os.listdir()
 
         # handle queries
-        if '?' in self.path:
-            queries = urllib.parse.parse_qs(self.path.split('?', 1)[1], True)
+        if "?" in self.path:
+            queries = urllib.parse.parse_qs(self.path.split("?", 1)[1], True)
 
-            if 'z' in queries:
+            if "z" in queries:
                 self.zipf = True
             else:
                 try:
-                    self.imgcount = int(queries['i'][0])
-                    self.page = int(queries['p'][0])
-                    self.sort = queries['s'][0]
+                    self.imgcount = int(queries["i"][0])
+                    self.page = int(queries["p"][0])
+                    self.sort = queries["s"][0]
                 except KeyError:
                     pass
 
-                if self.page < 0: self.page = 0
+                if self.page < 0:
+                    self.page = 0
 
         # sends the content
         self.send_response(200)
@@ -139,20 +145,21 @@ would you like to <a href="{url}"> download it?</a></p><br>''')
             wfile = self.generate_zip(files)
         else:
             index = self.page * self.imgcount
-            if len(files) < index: index = 0
-            files = fsort(files, self.sort)[index:index + self.imgcount]
+            if len(files) < index:
+                index = 0
+            files = fsort(files, self.sort)[index : index + self.imgcount]
 
             wfile = self.generate_html(files)
 
-        self.send_header('Content-Length', str(len(wfile)))
+        self.send_header("Content-Length", str(len(wfile)))
         self.end_headers()
-        self.wfile.write(bytes(wfile, 'utf-8')
+        self.wfile.write(bytes(wfile, "utf-8"))
 
     def do_GET(self):
         try:
             return super().do_GET()
         except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
-            print(f'{self.path} was interrupted', file=sys.stderr)
+            print(f"{self.path} was interrupted", file=sys.stderr)
 
 
 # for ipv6 support
@@ -167,7 +174,7 @@ class coolServer(http.server.ThreadingHTTPServer):
 # get local ip
 def ip():
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-        s.connect(('8.8.8.8', 80))
+        s.connect(("8.8.8.8", 80))
         return s.getsockname()[0]
 
 
@@ -179,12 +186,12 @@ def main():
         try:
             from PyQt5.QtWidgets import QApplication, QFileDialog
         except ModuleNotFoundError:
-            print('directory not specified and PyQt5 not installed.', file=sys.stderr)
+            print("directory not specified and PyQt5 not installed.", file=sys.stderr)
             sys.exit(1)
 
         gui = QApplication(sys.argv)
         root = QFileDialog.getExistingDirectory()
-        del(gui)
+        del gui
 
     try:
         os.chdir(root)
@@ -195,12 +202,12 @@ def main():
     # run server
     port = 80  # for future me: this could've been an walrus operator. but i already set minver 3.7
     try:
-        httpd = coolServer(('::', port), coolHandler)
+        httpd = coolServer(("::", port), coolHandler)
     except PermissionError:
         port = 8080
-        httpd = coolServer(('::', port), coolHandler)
+        httpd = coolServer(("::", port), coolHandler)
 
-    print(f'http://{ip()}:{port}')
+    print(f"http://{ip()}:{port}")
 
     try:
         httpd.serve_forever()
@@ -208,5 +215,5 @@ def main():
         httpd.server_close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
